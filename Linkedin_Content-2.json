@@ -1,0 +1,835 @@
+{
+  "name": "Linkedin Content",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "event": "pagedUpdatedInDatabase",
+        "databaseId": {
+          "__rl": true,
+          "value": "1ee9d5fd-d5c8-81d5-b34c-e559544f289e",
+          "mode": "list",
+          "cachedResultName": "DB - Content",
+          "cachedResultUrl": "https://www.notion.so/1ee9d5fdd5c881d5b34ce559544f289e"
+        }
+      },
+      "type": "n8n-nodes-base.notionTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1136,
+        608
+      ],
+      "id": "dd20f23b-c97d-4736-9f5a-5f189c92cfb9",
+      "name": "Notion Trigger"
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -768,
+        912
+      ],
+      "id": "362d5d98-c737-46ae-9617-56982c23c534",
+      "name": "Wait",
+      "webhookId": "9edb2291-403c-42e6-afd6-a8e079fedfb6",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "get",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Notion Trigger').item.json.id }}",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -608,
+        928
+      ],
+      "id": "1682c220-a7ed-41f6-a9b2-e7f743c627ed",
+      "name": "Notion"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a71abf06-041b-4b29-b808-436b404258cf",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "🔍 To review",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -928,
+        608
+      ],
+      "id": "8456fc3d-88bd-405d-b039-01e598e610b9",
+      "name": "Hat Beitrag eine Idee?",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a71abf06-041b-4b29-b808-436b404258cf",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "🔍 To review",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -416,
+        944
+      ],
+      "id": "dba6a0f5-6dda-4e84-8b86-0c1885872c6d",
+      "name": "Parameter geändert?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Alle Inhalte aus den Blöcken extrahieren\nconst blocks = items\n  .map(item => item.json.content)\n  .filter(text => !!text && text.trim() !== \"\");\n\n// Mit Zeilenumbrüchen zusammenfügen\nconst mergedText = blocks.join(\"\\n\\n\");\n\nreturn [{\n  json: {\n    mergedText\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        288
+      ],
+      "id": "750c4586-e490-4633-8906-270fc2c85fcf",
+      "name": "Text zusammenfügen"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "get",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Notion Trigger').item.json.id }}",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -608,
+        560
+      ],
+      "id": "44192ec3-a89d-42a9-8013-9b8a2a30b664",
+      "name": "Richtigen Beitrag wählen"
+    },
+    {
+      "parameters": {
+        "resource": "assistant",
+        "assistantId": {
+          "__rl": true,
+          "value": "asst_RpqcSGSUHdNQII3Vqnjfy4a3",
+          "mode": "list",
+          "cachedResultName": "LinkedIn Copywriter 1"
+        },
+        "prompt": "define",
+        "text": "=`Überarbeite den folgenden Rohtext stilistisch, strukturell und inhaltlich so, dass er als erfolgreicher LinkedIn-Beitrag funktioniert und zu Lukas Babbick (LeadMagnetix) passt. Achte auf eine starke Einleitung, verständliche Sprache und klare Leserführung. Berücksichtige deine hinterlegten Richtlinien wie Copywriting, Zielgruppeneignung, Content-Pillars, Content-Funnel, Schreibstil und alle weiteren hinterlegten Parameter.\n\nHier ist der Roh-Text:{{ $json.mergedText }}`",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -48,
+        352
+      ],
+      "id": "44fb1b2b-557d-4776-8dac-f0359abe7d43",
+      "name": "Post erstellen"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "1ee9d5fd-d5c8-81d5-b34c-e559544f289e",
+          "mode": "list",
+          "cachedResultName": "DB - Content",
+          "cachedResultUrl": "https://www.notion.so/1ee9d5fdd5c881d5b34ce559544f289e"
+        },
+        "title": "={{ $json.name }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Platform connection|select",
+              "selectValue": "LI@lukas-babbick-a969a21aa"
+            },
+            {
+              "key": "Status|select",
+              "selectValue": "🌃Need Picture"
+            },
+            {
+              "key": "Publication time|date",
+              "date": "={{ $json.property_publication_time.start }}"
+            }
+          ]
+        },
+        "blockUi": {
+          "blockValues": [
+            {
+              "textContent": "={{ $json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1632,
+        1072
+      ],
+      "id": "f1552f2b-f462-4438-8d6f-abbf2467fd3d",
+      "name": "Fertiger Content",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        1424,
+        1072
+      ],
+      "id": "15488d64-da9f-435a-b72f-63acb75c88a9",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "resource": "assistant",
+        "assistantId": {
+          "__rl": true,
+          "value": "asst_aS66kimHL0YmFxZG8U9znrsy",
+          "mode": "list",
+          "cachedResultName": "LinkedIn Content-Prüfer 1"
+        },
+        "prompt": "define",
+        "text": "=Ich habe einen Post erstellt. Kannst du bitte prüfen, ob der Post zu meinem Funnnel und der Contentstrategie passt? Gib mir bitte ein ausführliches Feedback.\nBerücksichtige dabei die letzten 15 Postings, damit du der Beitrag optimal in die Contentstrategie integriert wird.\nDie letzten 15 Postings sind alle untereinander geschrieben. So kannst du sie erkennen:\nPost beginnt: \nPosting Inhalt\n--- Ende eines Posts ---\n\nHier ist der aktuelle Post:\n\"{{ $json.output }}\"\n\nHier sind die letzten 15 Postings:\n\"{{ $json.allPostsWithMarkers }}\"",
+        "memory": "threadId",
+        "threadId": "={{ $('Post erstellen').item.json.threadId }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        480,
+        80
+      ],
+      "id": "bb926cf1-d2cb-4976-923c-f9fe1e7d3e22",
+      "name": "Past Posting in den Funnel?"
+    },
+    {
+      "parameters": {
+        "resource": "assistant",
+        "assistantId": {
+          "__rl": true,
+          "value": "asst_szZyApYKfs3rBwLFm5Q8KosF",
+          "mode": "list",
+          "cachedResultName": "LinkedIn Zielgruppen Check 1"
+        },
+        "prompt": "define",
+        "text": "=Ich habe einen Post erstellt. Kannst du bitte prüfen, ob der Post zu meiner Zielgruppe passt? Achte darauf, ob die Beispiele in der Realität von meiner Zielgruppe widerspiegeln oder sinnfrei sind. Gib mir bitte ein ausführliches Feedback.\nHier ist der Post:{{ $json.output}}`",
+        "memory": "threadId",
+        "threadId": "={{ $('Post erstellen').item.json.threadId }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        480,
+        240
+      ],
+      "id": "a3daaa5c-d679-4066-8cae-9bae0891d0b4",
+      "name": "Gefällt der Post meiner Zielgruppe?"
+    },
+    {
+      "parameters": {
+        "resource": "assistant",
+        "assistantId": {
+          "__rl": true,
+          "value": "asst_RpqcSGSUHdNQII3Vqnjfy4a3",
+          "mode": "list",
+          "cachedResultName": "LinkedIn Copywriter 1"
+        },
+        "prompt": "define",
+        "text": "=Ich bitte dich, den Post zu finalisieren. Dafür hast du Feedback von der Zielgruppe bekommen und, ob der Beitrag zu meinem Funnel passt. Nutze das Feedback.  Bitte behalte meinen Schreibstil bei. Dafür kannst du dich an den 15 Postings orientieren.   Hier ist das Feedback der Zielgruppe:\n„\n{{ $json.zielgruppenFeedback }}\n„\n\nHier ist das Feedback zur Eignung des Beitrags im Funnel:  \n„\n{{ $json.funnelFeedback }}\n„\n\nDas ist der erste Entwurf: \n„\n{{ $json.output }}\n„\n",
+        "memory": "threadId",
+        "threadId": "={{ $('Post erstellen').item.json.threadId }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1248,
+        624
+      ],
+      "id": "45038a94-7dce-42b8-8fc2-f83e22a70199",
+      "name": "Finalisierung des Postings"
+    },
+    {
+      "parameters": {
+        "resource": "assistant",
+        "assistantId": {
+          "__rl": true,
+          "value": "asst_RpqcSGSUHdNQII3Vqnjfy4a3",
+          "mode": "list",
+          "cachedResultName": "LinkedIn Copywriter 1"
+        },
+        "prompt": "define",
+        "text": "=`Überarbeite den folgenden Rohtext stilistisch, strukturell und inhaltlich so, dass er als erfolgreicher LinkedIn-Beitrag funktioniert und zu Lukas Babbick (LeadMagnetix) passt. Achte auf eine starke Einleitung, verständliche Sprache und klare Leserführung. Berücksichtige deine hinterlegten Richtlinien wie Copywriting, Zielgruppeneignung, Content-Pillars, Content-Funnel, Schreibstil und alle weiteren hinterlegten Parameter.\n\nHier ist der Roh-Text:{{ $json.mergedText }}`",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        192,
+        560
+      ],
+      "id": "8f5ba6ac-2887-4467-beda-6dacd19973d6",
+      "name": "Post optimieren"
+    },
+    {
+      "parameters": {
+        "resource": "block",
+        "operation": "getAll",
+        "blockId": {
+          "__rl": true,
+          "value": "={{$json[\"id\"]}}",
+          "mode": "id"
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -464,
+        368
+      ],
+      "id": "7828c737-7fd6-4705-bf93-ff9fefc4da51",
+      "name": "Content extrahieren"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "1ee9d5fd-d5c8-81d5-b34c-e559544f289e",
+          "mode": "list",
+          "cachedResultName": "DB - Content",
+          "cachedResultUrl": "https://www.notion.so/1ee9d5fdd5c881d5b34ce559544f289e"
+        },
+        "limit": 15,
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "key": "Platform connection|select",
+              "condition": "equals",
+              "selectValue": "LI@lukas-babbick-a969a21aa"
+            },
+            {
+              "key": "Status|select",
+              "condition": "equals",
+              "selectValue": "🔥 Published"
+            }
+          ]
+        },
+        "options": {
+          "sort": {
+            "sortValue": [
+              {
+                "key": "Publication time|date",
+                "direction": "descending"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -560,
+        128
+      ],
+      "id": "211786f4-ea31-4d00-9f05-5b45e5178d21",
+      "name": "Letzt Postings holen1"
+    },
+    {
+      "parameters": {
+        "resource": "block",
+        "operation": "getAll",
+        "blockId": {
+          "__rl": true,
+          "value": "={{$json[\"id\"]}}",
+          "mode": "id"
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -304,
+        64
+      ],
+      "id": "b597f817-ceea-406c-b0bf-6764a5c62d64",
+      "name": "Content extrahieren2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const postsGroupedByPage = {};\n\n// Schritt 1: Alle eingehenden Child Blocks nach ihrer Parent ID (Seiten-ID) gruppieren\n// 'items' enthält hier alle 165 Child Blocks von allen 5 Seiten\nfor (const item of items) {\n  // Überprüfe, ob item.json existiert und ob parent_id und content vorhanden sind\n  if (item.json && item.json.parent_id && item.json.content && typeof item.json.content === 'string') {\n    const pageId = item.json.parent_id;\n    const blockContent = item.json.content;\n\n    // Nur nicht-leere und getrimmte Inhalte hinzufügen\n    const cleanedBlockContent = blockContent.trim();\n    if (cleanedBlockContent !== \"\") {\n      if (!postsGroupedByPage[pageId]) {\n        postsGroupedByPage[pageId] = [];\n      }\n      postsGroupedByPage[pageId].push(cleanedBlockContent);\n    }\n  }\n}\n\nconst allMarkedPosts = [];\n\n// Schritt 2: Für jede gruppierte Seite (also jeden der 5 Social Media Beiträge)\n// den Text zusammenfügen und Marker hinzufügen\nfor (const pageId in postsGroupedByPage) {\n  // Sicherstellen, dass es eine eigene Eigenschaft ist (nicht von Prototype)\n  if (postsGroupedByPage.hasOwnProperty(pageId)) {\n    const pageBlocks = postsGroupedByPage[pageId];\n    // Füge die Blöcke EINER einzelnen Seite mit Zeilenumbrüchen zusammen\n    const combinedPageText = pageBlocks.join('\\n\\n');\n\n    // Füge die gewünschten Marker hinzu\n    const markedPost = `Post beginnt:\\n${combinedPageText}\\nPost ist zu Ende.`;\n    allMarkedPosts.push(markedPost);\n  }\n}\n\n// Schritt 3: Alle 5 markierten Beiträge zu einem einzigen, großen Text zusammenfügen\n// Hier verwenden wir einen deutlicheren Trenner zwischen den Beiträgen\nconst finalCombinedText = allMarkedPosts.join('\\n\\n--- Ende eines Posts ---\\n\\n');\n\n// Gib das finale Ergebnis als EIN EINZIGES Item zurück\nreturn [{\n  json: {\n    allPostsWithMarkers: finalCombinedText\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "458d339c-10f8-41d4-bc4e-0595b86d286b",
+      "name": "Text zusammenfügen2"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        304,
+        80
+      ],
+      "id": "bbd95fd7-de27-428c-8433-9800076afc97",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -848,
+        224
+      ],
+      "id": "ff58d862-4a0a-4c4f-8c52-6a284c25115a",
+      "name": "No nothing, just start"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        912,
+        192
+      ],
+      "id": "3a61ebcd-5884-4491-a784-7a3be4210e1a",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        1072,
+        480
+      ],
+      "id": "06a67397-5b9d-4a75-8e62-4cdbad1c3d09",
+      "name": "Merge3"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        320,
+        240
+      ],
+      "id": "ff571165-0a65-4404-9d30-c96ad1368dd1",
+      "name": "Merge4"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      funnelFeedback: $json.output,\n      // Optional: andere Felder übernehmen\n      ...$json\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        80
+      ],
+      "id": "0c95a3c4-b33c-4738-a77e-15f13968b2c5",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      zielgruppenFeedback: $json.output,\n      // Optional: andere Felder übernehmen\n      ...$json\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        288
+      ],
+      "id": "be68e0df-8153-488f-ad35-c2c612b6d4c0",
+      "name": "Code1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Notion Trigger": {
+      "main": [
+        [
+          {
+            "node": "Hat Beitrag eine Idee?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "No nothing, just start",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Notion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion": {
+      "main": [
+        [
+          {
+            "node": "Parameter geändert?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hat Beitrag eine Idee?": {
+      "main": [
+        [
+          {
+            "node": "Richtigen Beitrag wählen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parameter geändert?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Richtigen Beitrag wählen": {
+      "main": [
+        [
+          {
+            "node": "Content extrahieren",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Text zusammenfügen": {
+      "main": [
+        [
+          {
+            "node": "Post erstellen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post erstellen": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Fertiger Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Past Posting in den Funnel?": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gefällt der Post meiner Zielgruppe?": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalisierung des Postings": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content extrahieren": {
+      "main": [
+        [
+          {
+            "node": "Text zusammenfügen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Letzt Postings holen1": {
+      "main": [
+        [
+          {
+            "node": "Content extrahieren2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content extrahieren2": {
+      "main": [
+        [
+          {
+            "node": "Text zusammenfügen2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text zusammenfügen2": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Past Posting in den Funnel?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No nothing, just start": {
+      "main": [
+        [
+          {
+            "node": "Letzt Postings holen1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "Finalisierung des Postings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge4": {
+      "main": [
+        [
+          {
+            "node": "Gefällt der Post meiner Zielgruppe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d2cfb9dc-e9fa-400e-a030-8913e1663102",
+  "meta": {
+    "instanceId": "7cdbba0f53b96b22f83ec27ee06ffcfbffd5115f76425ca604bd98b61abff154"
+  },
+  "id": "UFQaDhSxKhBdDeHH",
+  "tags": []
+}
