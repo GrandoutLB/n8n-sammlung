@@ -1,0 +1,650 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "name": "Daily Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        -1520,
+        -272
+      ],
+      "id": "ab1535a7-d331-4c11-b77c-3200675cffc0",
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1b2c3d4-e5f6-4000-aaaa-000000000001",
+              "name": "feeds",
+              "type": "array",
+              "value": "[\"https://cert.ssi.gouv.fr/feed/\", \"https://feeds.feedburner.com/TheHackersNews\", \"https://blog.cryptographyengineering.com/feed\", \"https://cybersecuritynews.com/feed/\", \"https://securityboulevard.com/feed/\"]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Feeds",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -1360,
+        -272
+      ],
+      "id": "db848f5b-db53-4eda-ac5a-1280166fca64",
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "feeds",
+        "include": "allOtherFields",
+        "options": {
+          "includeBinary": false
+        }
+      },
+      "name": "Split Feeds",
+      "type": "n8n-nodes-base.splitOut",
+      "position": [
+        -1184,
+        -272
+      ],
+      "id": "2e575135-337a-4f28-8068-7758b79ceb6e",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.feeds }}",
+        "options": {
+          "ignoreSSL": false
+        }
+      },
+      "name": "Read RSS",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "position": [
+        -1024,
+        -272
+      ],
+      "id": "856894ee-998c-464d-8365-8d4aed01560f",
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "cond-1",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              },
+              "leftValue": "={{ Date.parse($json.pubDate) }}",
+              "rightValue": "={{ Date.now() - 24 * 60 * 60 * 1000 }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "If Recent?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -688,
+        -272
+      ],
+      "id": "b2a7f6a1-5657-4726-a9b5-3326f7b2ee1f",
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "type": "random"
+      },
+      "name": "Randomize",
+      "type": "n8n-nodes-base.sort",
+      "position": [
+        -512,
+        -352
+      ],
+      "id": "fc4572a4-3bb6-4912-b849-d843448805ff",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "include": "allFieldsExcept",
+        "options": {}
+      },
+      "name": "Aggregate Articles",
+      "type": "n8n-nodes-base.aggregate",
+      "position": [
+        -336,
+        -352
+      ],
+      "id": "8663ce2c-a885-4f5b-86d7-d8d16b8d8187",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "={{ 'Analyze the aggregated cybersecurity articles, enrich them with CVE details where applicable, and produce a consolidated markdown digest. Use available tools to fetch full article content and to query CVE information. Return structured markdown output suitable for email formatting.' }}"
+        }
+      },
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        160,
+        -192
+      ],
+      "id": "1144fa12-2c24-4de7-873d-20ae206d878f",
+      "typeVersion": 2.1
+    },
+    {
+      "parameters": {
+        "toolDescription": "Fetch full article HTML/JSON or external CVE pages when given a URL.",
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "name": "Fetch Article Tool",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "position": [
+        144,
+        144
+      ],
+      "id": "aa6f7984-56fe-45b2-8be1-a239b7b2dd6a",
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "description": "Use for intermediate reasoning, planning, and validation steps."
+      },
+      "name": "Think Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "position": [
+        272,
+        144
+      ],
+      "id": "edb01f0e-72af-499b-9734-54be81a6d567",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "description": "Invoke an external workflow to fetch structured CVE details for identifiers found in articles.",
+        "workflowId": {
+          "__rl": true,
+          "value": "v70oqo6GVVwpSR94",
+          "mode": "list",
+          "cachedResultName": "Cybersecurity Newsletter"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "cve": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('cve', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "cve",
+              "displayName": "cve",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "name": "Check CVE Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        496,
+        144
+      ],
+      "id": "aeebf81a-72dc-4703-aa0a-546f55d21ed6",
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Gemini Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "position": [
+        32,
+        144
+      ],
+      "id": "dff55f7f-fcc0-457c-afd9-1d5e88dfc4cc",
+      "typeVersion": 1,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "1KFHMTrK4XmRAi5x",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "markdownToHtml",
+        "markdown": "={{ $json.output || $json.text || $json.result }}",
+        "destinationKey": "html",
+        "options": {}
+      },
+      "name": "Markdown to HTML",
+      "type": "n8n-nodes-base.markdown",
+      "position": [
+        800,
+        -192
+      ],
+      "id": "cc490e6d-e3e6-4a8a-8ad2-f3060adb962b",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {},
+      "name": "No Operation",
+      "type": "n8n-nodes-base.noOp",
+      "position": [
+        -512,
+        -192
+      ],
+      "id": "9e532cd8-3f8c-48d3-8308-6a85468f0d45",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "# Read RSS news",
+        "height": 272,
+        "width": 704
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1568,
+        -384
+      ],
+      "typeVersion": 1,
+      "id": "0cc04535-382a-47b8-b485-b543d8f68618",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# Filter recent ones\n",
+        "height": 384,
+        "width": 560,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -720,
+        -432
+      ],
+      "typeVersion": 1,
+      "id": "0a1807f1-5552-439f-bd87-2b9ad7297f7e",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n  \"cve\": \"CVE-2024-3400\"\n}"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1520,
+        192
+      ],
+      "id": "d2421d45-8a52-4060-9a78-820bdd2270d4",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "url": "=https://cve.circl.lu/api/cve/{{ $json.cve }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1312,
+        112
+      ],
+      "id": "0c6e3e9d-52b6-4e1f-a1ea-aa85219ffa4e",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "url": "=https://vulners.com/api/v3/search/lucene/?query=bulletinFamily:exploit order:published {{ $json.cve }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1312,
+        288
+      ],
+      "id": "942f7ea2-1667-4999-b049-979b1f446e68",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "WeR8nQzbFcd1IAQH",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1120,
+        208
+      ],
+      "id": "c4e56559-d285-48c8-bcfe-55f2d34f69e8",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "content": "# Fetch CVE Information\n",
+        "height": 416,
+        "width": 640,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1552,
+        32
+      ],
+      "typeVersion": 1,
+      "id": "ff1f9352-8de9-4a04-ad6b-92f15fe816b8",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "# Generate summary\n",
+        "height": 576,
+        "width": 640,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -16,
+        -288
+      ],
+      "typeVersion": 1,
+      "id": "6f659e7d-d593-4578-9cd6-bdabe56dc7cf",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "# Send summary\n",
+        "height": 320,
+        "width": 544,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        720,
+        -336
+      ],
+      "typeVersion": 1,
+      "id": "41e6ef9a-2df7-4ca4-b98c-a4b3e2f10adc",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "sendTo": "XXXXX",
+        "subject": "=Cyber Report - n8n - {{ new Date().toLocaleDateString() }}",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1040,
+        -192
+      ],
+      "id": "fdd280bc-3f22-41a4-9824-d5f3326f878b",
+      "name": "Send a message",
+      "webhookId": "0beaebb7-c5d0-4253-8a73-104d61cb7f89"
+    },
+    {
+      "parameters": {
+        "content": "## Generated with https://graplia.com\n",
+        "height": 80,
+        "width": 656,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        720,
+        864
+      ],
+      "typeVersion": 1,
+      "id": "044710bc-a323-47a8-b95e-eb7f9f859f7f",
+      "name": "Sticky Note5"
+    }
+  ],
+  "connections": {
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Set Feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Feeds": {
+      "main": [
+        [
+          {
+            "node": "Split Feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Feeds": {
+      "main": [
+        [
+          {
+            "node": "Read RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read RSS": {
+      "main": [
+        [
+          {
+            "node": "If Recent?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Recent?": {
+      "main": [
+        [
+          {
+            "node": "Randomize",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Randomize": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Articles": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Markdown to HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Article Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check CVE Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown to HTML": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "cve": "CVE-2025-8671"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d97c901d38f1c8088e63b14f140d53ab62d40996d7fd198c6c6e51596c6e87b5"
+  }
+}
